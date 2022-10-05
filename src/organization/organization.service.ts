@@ -7,8 +7,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { Repository, DataSource } from 'typeorm';
 import {
   IPaginationOptions,
   paginateRaw,
@@ -23,6 +23,8 @@ export class OrganizationService {
 
     @InjectRepository(OrganizationType)
     private readonly organizationTypeRepository: Repository<OrganizationType>,
+
+    @InjectDataSource() private dataSource: DataSource,
   ) {}
 
   async findAll(
@@ -32,7 +34,8 @@ export class OrganizationService {
   ): Promise<Pagination<OrganizationResponse>> {
     const organizations = this.organizationRepository
       .createQueryBuilder('o')
-      .leftJoinAndSelect('o.type', 'type')
+      .leftJoin('o.type', 'type')
+      .leftJoin('o.practitioners', 'p')
       .select([
         'o.id AS id',
         'o.identifier AS identifier',
@@ -42,37 +45,32 @@ export class OrganizationService {
         'o.phone AS phone',
         'o.email AS email',
         'type.name AS type',
+        'COUNT(p.id) AS "numberOfPractitioners"',
       ])
       .where('o.active IS true')
+      .groupBy('o.id, type.name')
       .orderBy(sortField, sortDir);
 
-    return paginateRaw<OrganizationResponse>(organizations, options);
+    return paginateRaw<any>(organizations, options);
   }
 
-  async findOrganizationById(id: number): Promise<OrganizationResponse> {
-    const organization = this.organizationRepository
-      .createQueryBuilder('o')
-      .leftJoin('o.type', 'type')
-      .select([
-        'o.id AS id',
-        'o.identifier AS identifier',
-        'o.active AS active',
-        'o.name AS name',
-        'o.address AS address',
-        'o.phone AS phone',
-        'o.email AS email',
-        'type AS type',
-      ])
-      .where('o.id = :orgId', { orgId: id })
-      .andWhere('o.active IS true');
+  async findOrganizationById(id: number): Promise<Organization> {
+    const organization = await this.organizationRepository.findOne({
+      where: {
+        id: id,
+      },
+      relations: ['type', 'practitioners'],
+    });
 
-    const count = await organization.getCount();
-
-    if (count == 0) {
+    if (!organization) {
       throw new NotFoundException('Organization with given ID not found');
     }
 
-    return organization.getRawOne();
+    organization.practitioners.forEach(
+      (practitioner) => delete practitioner.organization,
+    );
+
+    return organization;
   }
 
   async createOrganization(

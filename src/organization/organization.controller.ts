@@ -14,6 +14,7 @@ import {
 import { OrganizationResponse } from './dto/organization-response';
 import { BackendValidationPipe } from 'src/shared/pipes/backend-validation.pipe';
 import { Pagination } from 'nestjs-typeorm-paginate';
+import { Organization } from './organization.entity';
 
 @Controller('organization')
 export class OrganizationController {
@@ -35,7 +36,7 @@ export class OrganizationController {
   }
 
   @Get('/:id')
-  findById(@Param('id') id: number): Promise<OrganizationResponse> {
+  findById(@Param('id') id: number): Promise<Organization> {
     return this.organizationService.findOrganizationById(id);
   }
 
@@ -46,16 +47,16 @@ export class OrganizationController {
     return this.organizationService.createOrganization(organizationDto);
   }
 
-  @Put('/delete/:id')
-  deleteById(@Param('id') id: number): Promise<{ message: string }> {
-    return this.organizationService.deleteOrganization(id);
-  }
-
   @Put('/:id')
   updateOrganization(
     @Param('id') id: number,
     @Body(BackendValidationPipe) newOrganization: CreateOrganizationDto,
   ): Promise<{ message: string }> {
     return this.organizationService.updateOrganization(id, newOrganization);
+  }
+
+  @Put('/delete/:id')
+  deleteById(@Param('id') id: number): Promise<{ message: string }> {
+    return this.organizationService.deleteOrganization(id);
   }
 }

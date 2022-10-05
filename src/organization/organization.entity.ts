@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
+import { Practitioner } from './../practitioner/practitioner.entity';
 import { OrganizationType } from './organization-type.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'organizations' })
 export class Organization {
@@ -27,4 +28,10 @@ export class Organization {
 
     @Column()
     email: string;
+
+    @OneToMany(() => Practitioner, (practitioner) => practitioner.organization)
+    practitioners: Practitioner[];
+
+    @Column()
+    typeId: number;
 }

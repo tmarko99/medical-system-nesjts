@@ -3,6 +3,10 @@ import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
 export class CreateOrganizationDto {
   @IsNotEmpty()
+  @MinLength(5, { message: 'Minimal number of characters is 5' })
+  identifier: string;
+
+  @IsNotEmpty()
   active: boolean;
 
   @IsNotEmpty()
@@ -13,7 +17,7 @@ export class CreateOrganizationDto {
   name: string;
 
   address: string;
-  
+
   phone: string;
 
   @IsNotEmpty()

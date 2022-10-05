@@ -17,4 +17,6 @@ export class OrganizationResponse {
   phone: string;
 
   email: string;
+
+  numberOfPractitioners: number;
 }
