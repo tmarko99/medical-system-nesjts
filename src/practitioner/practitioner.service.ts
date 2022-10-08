@@ -3,6 +3,8 @@ import { CreatePractitionerDto } from './dto/create-practitioner.dto';
 import { Practitioner } from './practitioner.entity';
 import {
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -23,11 +25,11 @@ export class PractitionerService {
 
     @InjectRepository(Organization)
     private readonly organizationRepository: Repository<Organization>,
-
+    @Inject(forwardRef(() => OrganizationService))
     private readonly organizationService: OrganizationService,
   ) {}
 
-  async findAll(
+  async findAllPractitioners(
     options: IPaginationOptions,
     sortDir: 'ASC' | 'DESC' = 'ASC',
     sortField = 'id',
@@ -87,7 +89,7 @@ export class PractitionerService {
     return { message: 'Practitioner Created Successfully' };
   }
 
-  async findById(id: number): Promise<Practitioner> {
+  async findPractitionerById(id: number): Promise<Practitioner> {
     const practitioner = await this.practitionerRepository.findOne({
       where: {
         id: id,
@@ -99,14 +101,17 @@ export class PractitionerService {
       throw new NotFoundException('Practitioner with given ID not found');
     }
 
+    delete practitioner.organizationId;
+    delete practitioner.organization.typeId;
+
     return practitioner;
   }
 
-  async updatePractitioner(
+  async updatePractitionerById(
     id: number,
     newPractitioner: Partial<CreatePractitionerDto>,
   ): Promise<{ message: string }> {
-    const practitioner = await this.findById(id);
+    const practitioner = await this.findPractitionerById(id);
 
     if (practitioner.organizationId != newPractitioner.organizationId) {
       const organization = await this.organizationService.findOrganizationById(
@@ -121,8 +126,8 @@ export class PractitionerService {
     return { message: 'Practitioner updated successfully' };
   }
 
-  async deleteById(id: number): Promise<{ message: string }> {
-    const practitioner = await this.findById(id);
+  async deletePractitionerById(id: number): Promise<{ message: string }> {
+    const practitioner = await this.findPractitionerById(id);
 
     practitioner.active = false;
 

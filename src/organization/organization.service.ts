@@ -1,17 +1,22 @@
+import { PractitionerService } from './../practitioner/practitioner.service';
 import { OrganizationResponse } from './dto/organization-response';
 import { OrganizationType } from './organization-type.entity';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { Organization } from './organization.entity';
 import {
   ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import {
   IPaginationOptions,
+  paginate,
   paginateRaw,
+  paginateRawAndEntities,
   Pagination,
 } from 'nestjs-typeorm-paginate';
 
@@ -23,19 +28,20 @@ export class OrganizationService {
 
     @InjectRepository(OrganizationType)
     private readonly organizationTypeRepository: Repository<OrganizationType>,
-
-    @InjectDataSource() private dataSource: DataSource,
+    @Inject(forwardRef(() => PractitionerService))
+    private readonly practitionerService: PractitionerService,
   ) {}
 
-  async findAll(
+  async findAllOrganizations(
     options: IPaginationOptions,
     sortDir: 'ASC' | 'DESC' = 'ASC',
     sortField = 'id',
-  ): Promise<Pagination<OrganizationResponse>> {
+  ): Promise<Pagination<any>> {
     const organizations = this.organizationRepository
       .createQueryBuilder('o')
       .leftJoin('o.type', 'type')
-      .leftJoin('o.practitioners', 'p')
+      .leftJoin('o.practitioners', 'practitioner')
+      .leftJoin('o.patients', 'patient')
       .select([
         'o.id AS id',
         'o.identifier AS identifier',
@@ -45,13 +51,48 @@ export class OrganizationService {
         'o.phone AS phone',
         'o.email AS email',
         'type.name AS type',
-        'COUNT(p.id) AS "numberOfPractitioners"',
       ])
       .where('o.active IS true')
       .groupBy('o.id, type.name')
       .orderBy(sortField, sortDir);
 
-    return paginateRaw<any>(organizations, options);
+    const org = await this.organizationRepository.find({
+      where: {
+        active: true,
+      },
+      relations: ['practitioners', 'patients'],
+    });
+
+    const results = await paginate(this.organizationRepository, options);
+    console.log(results);
+
+    return new Pagination(
+      await Promise.all(
+        results.items.map(async (item) => {
+          const numberOfPractitioners = item.practitioners.filter(
+            (practitioner) => practitioner.active === true,
+          ).length;
+          const numberOfPatients = item.patients.filter(
+            (patient) => patient.active === true,
+          ).length;
+          const organizationType = item.type.name;
+
+          delete item.practitioners;
+          delete item.patients;
+          delete item.type;
+          delete item.typeId;
+
+          return {
+            ...item,
+            numberOfPractitioners: numberOfPractitioners,
+            numberOfPatients: numberOfPatients,
+            organizationType: organizationType,
+          };
+        }),
+      ),
+      results.meta,
+      results.links,
+    );
   }
 
   async findOrganizationById(id: number): Promise<Organization> {
@@ -109,7 +150,7 @@ export class OrganizationService {
     return { message: 'Organization Created Successfully' };
   }
 
-  async updateOrganization(
+  async updateOrganizationById(
     id: number,
     newOrganization: Partial<CreateOrganizationDto>,
   ): Promise<{ message: string }> {
@@ -129,7 +170,7 @@ export class OrganizationService {
     return { message: 'Organization updated successfully' };
   }
 
-  async deleteOrganization(id: number): Promise<{ message: string }> {
+  async deleteOrganizationById(id: number): Promise<{ message: string }> {
     const organization = await this.findOrganizationById(id);
 
     organization.active = false;

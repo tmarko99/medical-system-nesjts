@@ -5,12 +5,14 @@ import { AppService } from './app.service';
 import { config } from './config/ormconfig';
 import { OrganizationModule } from './organization/organization.module';
 import { PractitionerModule } from './practitioner/practitioner.module';
+import { PatientModule } from './patient/patient.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(config),
     OrganizationModule,
     PractitionerModule,
+    PatientModule,
   ],
   controllers: [AppController],
   providers: [AppService],

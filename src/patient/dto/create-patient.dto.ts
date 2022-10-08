@@ -6,10 +6,10 @@ import {
   IsNotEmpty,
   MinLength,
 } from 'class-validator';
+import { MaritalStatus } from './../patient.entity';
 import { Gender } from 'src/shared/enums/gender.enum';
-import { QualificationType } from '../practitioner.entity';
 
-export class CreatePractitionerDto {
+export class CreatePatientDto {
   @IsNotEmpty()
   @MinLength(5, { message: 'Minimal number of characters is 5' })
   identifier: string;
@@ -39,8 +39,13 @@ export class CreatePractitionerDto {
   @IsEmail()
   email: string;
 
-  @IsEnum(QualificationType)
-  qualification: string;
+  deceased: boolean;
+
+  @IsEnum(MaritalStatus)
+  maritalStatus: string;
+
+  @IsNotEmpty()
+  practitionerId: number;
 
   @IsNotEmpty()
   organizationId: number;

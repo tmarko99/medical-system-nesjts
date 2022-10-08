@@ -11,7 +11,6 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { OrganizationResponse } from './dto/organization-response';
 import { BackendValidationPipe } from 'src/shared/pipes/backend-validation.pipe';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { Organization } from './organization.entity';
@@ -26,9 +25,9 @@ export class OrganizationController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
     @Query('sortDir') sortDir: 'ASC' | 'DESC' = 'ASC',
     @Query('sortField') sortField = 'id',
-  ): Promise<Pagination<OrganizationResponse>> {
+  ): Promise<Pagination<Organization>> {
     limit = limit > 50 ? 50 : limit;
-    return this.organizationService.findAll(
+    return this.organizationService.findAllOrganizations(
       { page, limit },
       sortDir,
       sortField,
@@ -52,11 +51,11 @@ export class OrganizationController {
     @Param('id') id: number,
     @Body(BackendValidationPipe) newOrganization: CreateOrganizationDto,
   ): Promise<{ message: string }> {
-    return this.organizationService.updateOrganization(id, newOrganization);
+    return this.organizationService.updateOrganizationById(id, newOrganization);
   }
 
   @Put('/delete/:id')
   deleteById(@Param('id') id: number): Promise<{ message: string }> {
-    return this.organizationService.deleteOrganization(id);
+    return this.organizationService.deleteOrganizationById(id);
   }
 }

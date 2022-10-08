@@ -1,5 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Practitioner } from './../practitioner/practitioner.entity';
+import { Patient } from 'src/patient/patient.entity';
 import { OrganizationType } from './organization-type.entity';
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
@@ -14,7 +15,7 @@ export class Organization {
     @Column({ nullable: false })
     active: boolean;
 
-    @ManyToOne(() => OrganizationType, (organizationType) => organizationType.organizations)
+    @ManyToOne(() => OrganizationType, (organizationType) => organizationType.organizations, { eager: true })
     type: OrganizationType;
 
     @Column({ nullable: false, unique: true })
@@ -29,8 +30,11 @@ export class Organization {
     @Column()
     email: string;
 
-    @OneToMany(() => Practitioner, (practitioner) => practitioner.organization)
+    @OneToMany(() => Practitioner, (practitioner) => practitioner.organization, { eager: true })
     practitioners: Practitioner[];
+
+    @OneToMany(() => Patient, (patient) => patient.organization, { eager: true })
+    patients: Patient[];
 
     @Column()
     typeId: number;

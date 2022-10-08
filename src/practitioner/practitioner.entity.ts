@@ -1,13 +1,8 @@
 /* eslint-disable prettier/prettier */
 import { Organization } from 'src/organization/organization.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-
-export enum Gender {
-    MALE = 'Male',
-    FEMALE = 'Female',
-    OTHER = 'OTHER',
-    UNKNOWN = 'Unknown'
-}
+import { Patient } from 'src/patient/patient.entity';
+import { Gender } from 'src/shared/enums/gender.enum';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum QualificationType {
     DOCTOR_OF_MEDICINE = 'Doctor of Medicine',
@@ -41,7 +36,7 @@ export class Practitioner {
   })
   gender: string;
 
-  @Column({ type: 'date', nullable: false })
+  @Column({ type: 'date', nullable: false, name: 'birth_date' })
   birthDate: Date;
 
   @Column()
@@ -57,7 +52,11 @@ export class Practitioner {
   qualification: string;
 
   @ManyToOne(() => Organization, (organization) => organization.practitioners)
+  @JoinColumn({ name: 'organization_id' })
   organization: Organization;
+
+  @OneToMany(() => Patient, (patient) => patient.practitioner)
+  patients: Patient[];
 
   @Column()
   organizationId: number;

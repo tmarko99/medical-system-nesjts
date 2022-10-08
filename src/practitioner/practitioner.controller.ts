@@ -27,7 +27,7 @@ export class PractitionerController {
     @Query('sortField') sortField = 'id',
   ): Promise<Pagination<any>> {
     limit = limit > 50 ? 50 : limit;
-    return this.practitionerService.findAll(
+    return this.practitionerService.findAllPractitioners(
       { page, limit },
       sortDir,
       sortField,
@@ -36,7 +36,7 @@ export class PractitionerController {
 
   @Get('/:id')
   findById(@Param('id') id: number): Promise<Practitioner> {
-    return this.practitionerService.findById(id);
+    return this.practitionerService.findPractitionerById(id);
   }
 
   @Post()
@@ -51,11 +51,11 @@ export class PractitionerController {
     @Param('id') id: number,
     @Body(BackendValidationPipe) practitionerDto: CreatePractitionerDto,
   ): Promise<any> {
-    return this.practitionerService.updatePractitioner(id, practitionerDto);
+    return this.practitionerService.updatePractitionerById(id, practitionerDto);
   }
 
   @Put('/delete/:id')
   deleteById(@Param('id') id: number): Promise<{ message: string }> {
-    return this.practitionerService.deleteById(id);
+    return this.practitionerService.deletePractitionerById(id);
   }
 }
