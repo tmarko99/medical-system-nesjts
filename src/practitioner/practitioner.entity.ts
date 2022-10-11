@@ -1,8 +1,9 @@
 /* eslint-disable prettier/prettier */
 import { Organization } from 'src/organization/organization.entity';
+import { Examination } from './../examination/examination.entity';
 import { Patient } from 'src/patient/patient.entity';
 import { Gender } from 'src/shared/enums/gender.enum';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum QualificationType {
     DOCTOR_OF_MEDICINE = 'Doctor of Medicine',
@@ -57,6 +58,9 @@ export class Practitioner {
 
   @OneToMany(() => Patient, (patient) => patient.practitioner)
   patients: Patient[];
+
+  @ManyToMany(() => Examination, (examination) => examination.practitioners)
+  examinations: Examination[];
 
   @Column()
   organizationId: number;

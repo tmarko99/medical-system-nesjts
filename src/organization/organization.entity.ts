@@ -1,8 +1,15 @@
 /* eslint-disable prettier/prettier */
 import { Practitioner } from './../practitioner/practitioner.entity';
+import { Examination } from './../examination/examination.entity';
 import { Patient } from 'src/patient/patient.entity';
 import { OrganizationType } from './organization-type.entity';
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { 
+    Column, 
+    Entity, 
+    ManyToOne, 
+    OneToMany, 
+    PrimaryGeneratedColumn 
+} from 'typeorm';
 
 @Entity({ name: 'organizations' })
 export class Organization {
@@ -35,6 +42,9 @@ export class Organization {
 
     @OneToMany(() => Patient, (patient) => patient.organization, { eager: true })
     patients: Patient[];
+
+    @OneToMany(() => Examination, (examination) => examination.organization)
+    examinations: Examination[];
 
     @Column()
     typeId: number;

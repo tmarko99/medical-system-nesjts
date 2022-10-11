@@ -1,8 +1,9 @@
 /* eslint-disable prettier/prettier */
 import { Organization } from 'src/organization/organization.entity';
+import { Examination } from './../examination/examination.entity';
 import { Practitioner } from './../practitioner/practitioner.entity';
 import { Gender } from 'src/shared/enums/gender.enum';
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 export enum MaritalStatus {
     ANNULLED = 'Annuled',
@@ -61,6 +62,9 @@ export class Patient {
   @ManyToOne(() => Practitioner, (practitioner) => practitioner)
   @JoinColumn({ name: 'practitioner_id' })
   practitioner: Practitioner;
+
+  @OneToMany(() => Examination, (examination) => examination.patient)
+  examinations: Examination[];
 
   @Column()
   organizationId: number;

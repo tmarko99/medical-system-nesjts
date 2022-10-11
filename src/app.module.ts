@@ -6,6 +6,7 @@ import { config } from './config/ormconfig';
 import { OrganizationModule } from './organization/organization.module';
 import { PractitionerModule } from './practitioner/practitioner.module';
 import { PatientModule } from './patient/patient.module';
+import { ExaminationModule } from './examination/examination.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { PatientModule } from './patient/patient.module';
     OrganizationModule,
     PractitionerModule,
     PatientModule,
+    ExaminationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

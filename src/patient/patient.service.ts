@@ -15,17 +15,24 @@ import {
   Injectable,
   HttpStatus,
   NotFoundException,
+  Inject,
+  forwardRef,
+  BadRequestException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrganizationService } from 'src/organization/organization.service';
+import { Status } from 'src/examination/examination.entity';
 
 @Injectable()
 export class PatientService {
   constructor(
     @InjectRepository(Patient)
     private readonly patientRepository: Repository<Patient>,
+    @Inject(forwardRef(() => PractitionerService))
     private readonly practitionerService: PractitionerService,
+    @Inject(forwardRef(() => OrganizationService))
     private readonly organizationService: OrganizationService,
   ) {}
 
@@ -63,7 +70,7 @@ export class PatientService {
       where: {
         id: id,
       },
-      relations: ['organization', 'practitioner'],
+      relations: ['organization', 'practitioner', 'examinations'],
     });
 
     if (!patient) {
@@ -94,6 +101,8 @@ export class PatientService {
     this.checkPractitionerQualification(practitioner);
 
     const patient = this.patientRepository.create(p);
+
+    this.isIdentifierInUse(patient);
 
     patient.organization = organization;
     patient.practitioner = practitioner;
@@ -132,6 +141,36 @@ export class PatientService {
     return { message: 'Patient updated successfully' };
   }
 
+  async deletePatientById(id: number): Promise<{ message: string }> {
+    const patient = await this.findPatientById(id);
+
+    const examinationsInRunningState = patient.examinations.filter(
+      (examination) => {
+        return examination.status === Status.IN_PROGRESS;
+      },
+    ).length;
+
+    if (examinationsInRunningState > 0) {
+      throw new BadRequestException(
+        'Cannot delete patient because there are examinations in the RUNNING state',
+      );
+    }
+
+    patient.active = false;
+
+    this.patientRepository.save(patient);
+
+    return { message: 'Patient successfully deleted' };
+  }
+
+  async setUnassigned(id: number) {
+    const patient = await this.findPatientById(id);
+
+    patient.practitioner = null;
+
+    this.patientRepository.save(patient);
+  }
+
   private checkPractitionerQualification(practitioner: Practitioner) {
     if (practitioner.qualification !== QualificationType.DOCTOR_OF_MEDICINE) {
       throw new HttpException(
@@ -141,13 +180,15 @@ export class PatientService {
     }
   }
 
-  async deletePatientById(id: number): Promise<{ message: string }> {
-    const patient = await this.findPatientById(id);
+  private async isIdentifierInUse(patient) {
+    const patientByIdentifier = await this.patientRepository.findOneBy({
+      identifier: patient.identifier,
+    });
 
-    patient.active = false;
-
-    this.patientRepository.save(patient);
-
-    return { message: 'Patient successfully deleted' };
+    if (patientByIdentifier) {
+      throw new ConflictException(
+        'Patient with that identifier already exists, please choose another',
+      );
+    }
   }
 }

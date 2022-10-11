@@ -1,3 +1,4 @@
+import { PatientModule } from './../patient/patient.module';
 import { OrganizationModule } from './../organization/organization.module';
 import { Organization } from './../organization/organization.entity';
 import { Practitioner } from './practitioner.entity';
@@ -10,6 +11,7 @@ import { PractitionerService } from './practitioner.service';
   imports: [
     TypeOrmModule.forFeature([Practitioner, Organization]),
     forwardRef(() => OrganizationModule),
+    forwardRef(() => PatientModule),
   ],
   controllers: [PractitionerController],
   providers: [PractitionerService],
