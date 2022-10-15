@@ -25,7 +25,7 @@ export class PatientController {
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit = 10,
     @Query('sortDir') sortDir: 'ASC' | 'DESC' = 'ASC',
     @Query('sortField') sortField = 'id',
-  ): Promise<Pagination<any>> {
+  ): Promise<Pagination<Patient>> {
     limit = limit > 50 ? 50 : limit;
     return this.patientService.findAllPatients(
       { page, limit },

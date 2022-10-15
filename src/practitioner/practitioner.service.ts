@@ -19,6 +19,7 @@ import {
   Pagination,
 } from 'nestjs-typeorm-paginate';
 import { Status } from 'src/examination/examination.entity';
+import * as moment from 'moment';
 
 @Injectable()
 export class PractitionerService {
@@ -40,7 +41,7 @@ export class PractitionerService {
     options: IPaginationOptions,
     sortDir: 'ASC' | 'DESC' = 'ASC',
     sortField = 'id',
-  ): Promise<Pagination<any>> {
+  ): Promise<Pagination<Practitioner>> {
     const practitioners = this.practitionerRepository
       .createQueryBuilder('p')
       .leftJoin('p.organization', 'o')
@@ -61,7 +62,7 @@ export class PractitionerService {
       .where('p.active IS true')
       .orderBy(sortField, sortDir);
 
-    return paginateRaw<any>(practitioners, options);
+    return paginateRaw<Practitioner>(practitioners, options);
   }
 
   async createPractitioner(
@@ -142,6 +143,24 @@ export class PractitionerService {
     if (examinationsInRunningState > 0) {
       throw new BadRequestException(
         'Cannot delete practitioner because there are examinations in the RUNNING state by this practitioner',
+      );
+    }
+    const currentDate = moment(new Date()).format('yyyy-MM-dd HH:mm:ss');
+
+    if (
+      practitioner.examinations.filter(
+        (examination) =>
+          moment(examination.startDate).format('yyyy-MM-DD HH:mm:ss') <
+          currentDate,
+      ).length > 0 &&
+      practitioner.examinations.filter(
+        (examination) =>
+          moment(examination.startDate).format('yyyy-MM-DD HH:mm:ss') >
+          currentDate,
+      ).length > 0
+    ) {
+      throw new BadRequestException(
+        'You cannot delete a practitioner because there are examinations in executing phase',
       );
     }
 

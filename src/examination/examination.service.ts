@@ -8,6 +8,7 @@ import { ServiceType } from './service-type.entity';
 import { CreateExaminationDto } from './dto/create-examination.dto';
 import { Examination, Status } from './examination.entity';
 import {
+  BadRequestException,
   ConflictException,
   forwardRef,
   Inject,
@@ -20,6 +21,7 @@ import { OrganizationService } from 'src/organization/organization.service';
 import { PatientService } from 'src/patient/patient.service';
 import { FilterDto } from './dto/filter.dto';
 import { UpdateExamination } from './types/update.examination.type';
+import * as moment from 'moment';
 
 @Injectable()
 export class ExaminationService {
@@ -110,7 +112,7 @@ export class ExaminationService {
 
     examinations.orderBy(sortField, sortDir);
 
-    return paginateRaw(examinations, options);
+    return paginateRaw<Examination>(examinations, options);
   }
 
   async findExaminationById(id: number): Promise<Examination> {
@@ -222,6 +224,17 @@ export class ExaminationService {
 
   async deleteExaminationById(id: number): Promise<{ message: string }> {
     const examination = await this.findExaminationById(id);
+
+    const currentDate = moment(new Date()).format('yyyy-MM-DD HH:mm:ss');
+
+    if (
+      moment(examination.startDate).format('yyyy-MM-DD HH:mm:ss') &&
+      moment(examination.endDate).format('yyyy-MM-DD HH:mm:ss') > currentDate
+    ) {
+      throw new BadRequestException(
+        'You cannot delete an examination because is not completed',
+      );
+    }
 
     examination.status = Status.ENTERED_IN_ERROR;
 

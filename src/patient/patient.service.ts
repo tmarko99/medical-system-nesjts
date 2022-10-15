@@ -24,14 +24,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { OrganizationService } from 'src/organization/organization.service';
 import { Status } from 'src/examination/examination.entity';
+import * as moment from 'moment';
 
 @Injectable()
 export class PatientService {
   constructor(
     @InjectRepository(Patient)
     private readonly patientRepository: Repository<Patient>,
+
     @Inject(forwardRef(() => PractitionerService))
     private readonly practitionerService: PractitionerService,
+
     @Inject(forwardRef(() => OrganizationService))
     private readonly organizationService: OrganizationService,
   ) {}
@@ -40,7 +43,7 @@ export class PatientService {
     options: IPaginationOptions,
     sortDir: 'ASC' | 'DESC' = 'ASC',
     sortField = 'id',
-  ): Promise<Pagination<any>> {
+  ): Promise<Pagination<Patient>> {
     const patients = this.patientRepository
       .createQueryBuilder('p')
       .leftJoin('p.organization', 'o')
@@ -62,7 +65,7 @@ export class PatientService {
       .where('p.active IS true')
       .orderBy(sortField, sortDir);
 
-    return paginateRaw<any>(patients, options);
+    return paginateRaw<Patient>(patients, options);
   }
 
   async findPatientById(id: number): Promise<Patient> {
@@ -153,6 +156,25 @@ export class PatientService {
     if (examinationsInRunningState > 0) {
       throw new BadRequestException(
         'Cannot delete patient because there are examinations in the RUNNING state',
+      );
+    }
+
+    const currentDate = moment(new Date()).format('yyyy-MM-DD HH:mm:ss');
+
+    if (
+      patient.examinations.filter(
+        (examination) =>
+          moment(examination.startDate).format('yyyy-MM-DD HH:mm:ss') <
+          currentDate,
+      ).length > 0 &&
+      patient.examinations.filter(
+        (examination) =>
+          moment(examination.endDate).format('yyyy-MM-DD HH:mm:ss') >
+          currentDate,
+      ).length > 0
+    ) {
+      throw new BadRequestException(
+        'You cannot delete a patient because there are examinations in executing phase',
       );
     }
 

@@ -21,6 +21,7 @@ import {
   paginateRawAndEntities,
   Pagination,
 } from 'nestjs-typeorm-paginate';
+import * as moment from 'moment';
 
 @Injectable()
 export class OrganizationService {
@@ -45,7 +46,7 @@ export class OrganizationService {
     options: IPaginationOptions,
     sortDir: 'ASC' | 'DESC' = 'ASC',
     sortField = 'id',
-  ): Promise<Pagination<any>> {
+  ): Promise<Pagination<Organization>> {
     const organizations = this.organizationRepository
       .createQueryBuilder('o')
       .leftJoin('o.type', 'type')
@@ -62,6 +63,8 @@ export class OrganizationService {
         'type.name AS type',
         '(SELECT COUNT(p.id) FROM patients p INNER JOIN organizations o ON o.id = p.organization_id WHERE p.active = true)::INTEGER AS "numberOfPatients"',
         '(SELECT COUNT(p.id) FROM practitioners p INNER JOIN organizations o ON o.id = p.organization_id WHERE p.active = true)::INTEGER AS "numberOfPractitioners"',
+        '(SELECT COUNT(e.id) FROM examinations e INNER JOIN organizations o ON o.id = e.organization_id GROUP BY o.id)::INTEGER AS "numberOfAllExaminations"',
+        '(SELECT COUNT(e.id) FROM examinations e INNER JOIN organizations o ON o.id = e.organization_id WHERE e.status = \'in progress\' GROUP BY o.id)::INTEGER AS "numberOfActiveExaminations"',
       ])
       .where('o.active IS true')
       .groupBy('o.id, type.name')
@@ -74,7 +77,7 @@ export class OrganizationService {
       relations: ['practitioners', 'patients'],
     });
 
-    return paginateRaw(organizations, options);
+    return paginateRaw<Organization>(organizations, options);
 
     const results = await paginate(this.organizationRepository, options);
     console.log(results);
@@ -205,6 +208,25 @@ export class OrganizationService {
     if (examinationsInRunningState > 0) {
       throw new BadRequestException(
         'Cannot delete organization because there are examinations in the RUNNING state',
+      );
+    }
+
+    const currentDate = moment(new Date()).format('yyyy-MM-DD HH:mm:ss');
+
+    if (
+      organization.examinations.filter(
+        (examination) =>
+          moment(examination.startDate).format('yyyy-MM-DD HH:mm:ss') <
+          currentDate,
+      ).length > 0 &&
+      organization.examinations.filter(
+        (examination) =>
+          moment(examination.startDate).format('yyyy-MM-DD HH:mm:ss') >
+          currentDate,
+      ).length > 0
+    ) {
+      throw new BadRequestException(
+        'You cannot delete a organization because there are examinations in executing phase',
       );
     }
 
