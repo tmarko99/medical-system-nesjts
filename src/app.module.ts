@@ -7,6 +7,10 @@ import { OrganizationModule } from './organization/organization.module';
 import { PractitionerModule } from './practitioner/practitioner.module';
 import { PatientModule } from './patient/patient.module';
 import { ExaminationModule } from './examination/examination.module';
+import { UserModule } from './user/user.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './user/guards/jwt-auth.guard';
+import { RolesGuard } from './user/guards/roles.guard';
 
 @Module({
   imports: [
@@ -15,8 +19,19 @@ import { ExaminationModule } from './examination/examination.module';
     PractitionerModule,
     PatientModule,
     ExaminationModule,
+    UserModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {}

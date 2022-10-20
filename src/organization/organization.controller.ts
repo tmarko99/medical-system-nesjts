@@ -10,12 +10,18 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { BackendValidationPipe } from 'src/shared/pipes/backend-validation.pipe';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { Organization } from './organization.entity';
+import { Roles } from 'src/user/decorators/roles.decorator';
+import { Role } from 'src/user/role.enum';
+import { RolesGuard } from 'src/user/guards/roles.guard';
 
 @Controller('organization')
+@UseGuards(RolesGuard)
+@Roles(Role.Admin)
 export class OrganizationController {
   constructor(private readonly organizationService: OrganizationService) {}
 

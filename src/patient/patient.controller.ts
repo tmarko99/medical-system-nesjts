@@ -12,10 +12,16 @@ import {
   Query,
   DefaultValuePipe,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 import { Pagination } from 'nestjs-typeorm-paginate';
+import { RolesGuard } from 'src/user/guards/roles.guard';
+import { Roles } from 'src/user/decorators/roles.decorator';
+import { Role } from 'src/user/role.enum';
 
 @Controller('patient')
+@UseGuards(RolesGuard)
+@Roles(Role.Admin, Role.Practitioner, Role.Patient)
 export class PatientController {
   constructor(private readonly patientService: PatientService) {}
 

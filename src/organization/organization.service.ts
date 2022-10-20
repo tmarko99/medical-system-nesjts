@@ -79,36 +79,36 @@ export class OrganizationService {
 
     return paginateRaw<Organization>(organizations, options);
 
-    const results = await paginate(this.organizationRepository, options);
-    console.log(results);
+    // const results = await paginate(this.organizationRepository, options);
+    // console.log(results);
 
-    return new Pagination(
-      await Promise.all(
-        results.items.map(async (item) => {
-          const numberOfPractitioners = item.practitioners.filter(
-            (practitioner) => practitioner.active === true,
-          ).length;
-          const numberOfPatients = item.patients.filter(
-            (patient) => patient.active === true,
-          ).length;
-          const organizationType = item.type.name;
+    // return new Pagination(
+    //   await Promise.all(
+    //     results.items.map(async (item) => {
+    //       const numberOfPractitioners = item.practitioners.filter(
+    //         (practitioner) => practitioner.active === true,
+    //       ).length;
+    //       const numberOfPatients = item.patients.filter(
+    //         (patient) => patient.active === true,
+    //       ).length;
+    //       const organizationType = item.type.name;
 
-          delete item.practitioners;
-          delete item.patients;
-          delete item.type;
-          delete item.typeId;
+    //       delete item.practitioners;
+    //       delete item.patients;
+    //       delete item.type;
+    //       delete item.typeId;
 
-          return {
-            ...item,
-            numberOfPractitioners: numberOfPractitioners,
-            numberOfPatients: numberOfPatients,
-            organizationType: organizationType,
-          };
-        }),
-      ),
-      results.meta,
-      results.links,
-    );
+    //       return {
+    //         ...item,
+    //         numberOfPractitioners: numberOfPractitioners,
+    //         numberOfPatients: numberOfPatients,
+    //         organizationType: organizationType,
+    //       };
+    //     }),
+    //   ),
+    //   results.meta,
+    //   results.links,
+    // );
   }
 
   async findOrganizationSimpleById(id: number): Promise<Organization> {

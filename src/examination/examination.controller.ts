@@ -13,11 +13,17 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { Pagination } from 'nestjs-typeorm-paginate';
 import { UpdateExamination } from './types/update.examination.type';
+import { RolesGuard } from 'src/user/guards/roles.guard';
+import { Roles } from 'src/user/decorators/roles.decorator';
+import { Role } from 'src/user/role.enum';
 
 @Controller('examination')
+@UseGuards(RolesGuard)
+@Roles(Role.Admin, Role.Practitioner)
 export class ExaminationController {
   constructor(private readonly examinationService: ExaminationService) {}
 
